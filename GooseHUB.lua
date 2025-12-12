@@ -11,7 +11,7 @@ local LocalPlayer = Players.LocalPlayer
 -- НАСТРОЙКИ
 local Settings = {
     ESP = {Enabled = true, TeamCheck = false, Box = true, Name = true, Distance = true, HealthBar = true, Tracers = true},
-    Aimbot = {Enabled = true, Prediction = 0.135, Smoothness =  = 0.14, TriggerBot = true, HeadOnly = true},
+    Aimbot = {Enabled = true, Prediction = 0.135, Smoothness = 0.14, TriggerBot = true, HeadOnly = true},
     MenuOpen = true
 }
 
