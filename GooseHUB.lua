@@ -1,225 +1,239 @@
--- 🪿 GOOSEHUB v22.0 — ФУЛЛ С ВКЛАДКАМИ + НАСТРОЙКА БИНДОВ! ХОНК ХОНК 2025!
--- Всё в одном файле, работает в Xeno летит как гусь на стероидах!
+-- 🪿 GOOSEHUB v23.5 — БЛЮР + МЯГКИЕ АНИМАЦИИ + ИДЕАЛЬНЫЕ ВКЛАДКИ + БИНДЫ
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local TS = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
+
 local LocalPlayer = Players.LocalPlayer
 
+-- =============================
 -- НАСТРОЙКИ
+-- =============================
 local Settings = {
     ESP = {Enabled = true, TeamCheck = false, Box = true, Name = true, Distance = true, HealthBar = true, Tracers = true},
     Aimbot = {Enabled = false, Prediction = 0.135, Smoothness = 0.14, TriggerBot = true, HeadOnly = true},
     Binds = {Menu = Enum.KeyCode.K, Aimbot = Enum.KeyCode.H}
 }
 
-local ESPObjects = {}
 local MenuOpen = false
+local ChangingBind = nil
 
--- ===================================================================
--- КРАСИВОЕ МЕНЮ С ВКЛАДКАМИ
--- ===================================================================
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GooseHubV22"
-ScreenGui.Parent = game.CoreGui
+-- =============================
+-- GUI
+-- =============================
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "GooseHubV23"
 
+-- БЛЮР ФОНА
+local Blur = Instance.new("BlurEffect", game.Lighting)
+Blur.Size = 0
+
+-- ТЕНЬ
 local Shadow = Instance.new("Frame")
-Shadow.Size = UDim2.new(0, 550, 0, 450)
-Shadow.Position = UDim2.new(0.5, -275, 0.5, -225)
+Shadow.Size = UDim2.fromOffset(560,460)
+Shadow.Position = UDim2.new(0.5,-280,0.5,-230)
 Shadow.BackgroundColor3 = Color3.new(0,0,0)
-Shadow.BackgroundTransparency = 0.5
+Shadow.BackgroundTransparency = 0.45
 Shadow.ZIndex = 0
 Shadow.Visible = false
 Shadow.Parent = ScreenGui
-local ShadowCorner = Instance.new("UICorner")
-ShadowCorner.CornerRadius = UDim.new(0, 20)
-ShadowCorner.Parent = Shadow
+Instance.new("UICorner", Shadow).CornerRadius = UDim.new(0,20)
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 0, 0, 0)
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
-MainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.ZIndex = 1
-MainFrame.Parent = ScreenGui
+-- ОСНОВНОЕ МЕНЮ
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.fromOffset(0,0)
+Main.Position = UDim2.new(0.5,-250,0.5,-200)
+Main.BackgroundColor3 = Color3.fromRGB(25,25,40)
+Main.ZIndex = 2
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,16)
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 16)
-Corner.Parent = MainFrame
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 50)
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1,0,0,50)
 Title.BackgroundTransparency = 1
-Title.Text = "🪿 GOOSEHUB v22.0 — ХОНК ХОНК"
-Title.TextColor3 = Color3.fromRGB(255, 80, 80)
-Title.TextScaled = true
+Title.Text = "🪿 GOOSEHUB v23.5 — ХОНК ХОНК"
 Title.Font = Enum.Font.GothamBold
-Title.Parent = MainFrame
+Title.TextScaled = true
+Title.TextColor3 = Color3.fromRGB(255,100,100)
 
 -- ВКЛАДКИ
-local TabButtons = {}
-local TabFrames = {}
+local TabContainer = Instance.new("Frame", Main)
+TabContainer.Size = UDim2.new(1,0,0,50)
+TabContainer.Position = UDim2.new(0,0,0,50)
+TabContainer.BackgroundTransparency = 1
+
+local TabLayout = Instance.new("UIListLayout", TabContainer)
+TabLayout.FillDirection = Enum.FillDirection.Horizontal
+TabLayout.Padding = UDim.new(0,10)
+TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local Tabs = {}
+local CurrentTab = nil
 
 local function CreateTab(name)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(0, 100, 0, 40)
-    Button.Position = UDim2.new(0, 10 + (#TabButtons * 110), 0, 5)
-    Button.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    Button.Text = name
-    Button.TextColor3 = Color3.new(1,1,1)
-    Button.Font = Enum.Font.GothamBold
-    Button.Parent = MainFrame
-    local C = Instance.new("UICorner"); C.CornerRadius = UDim.new(0, 10); C.Parent = Button
+    local Btn = Instance.new("TextButton", TabContainer)
+    Btn.Size = UDim2.fromOffset(140,40)
+    Btn.BackgroundColor3 = Color3.fromRGB(40,40,60)
+    Btn.Text = name
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 16
+    Btn.TextColor3 = Color3.new(1,1,1)
+    local c = Instance.new("UICorner", Btn); c.CornerRadius = UDim.new(0,12)
 
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, -20, 1, -70)
-    Frame.Position = UDim2.new(0, 10, 0, 60)
-    Frame.BackgroundTransparency = 1
-    Frame.Visible = false
-    Frame.Parent = MainFrame
-
-    table.insert(TabButtons, Button)
-    TabFrames[name] = {Button = Button, Frame = Frame}
-
-    Button.MouseButton1Click:Connect(function()
-        for _, tab in pairs(TabFrames) do
-            tab.Frame.Visible = false
-        end
-        Frame.Visible = true
+    -- hover
+    Btn.MouseEnter:Connect(function()
+        TS:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(55,55,80)}):Play()
+    end)
+    Btn.MouseLeave:Connect(function()
+        TS:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(40,40,60)}):Play()
     end)
 
-    return Frame
+    local Content = Instance.new("ScrollingFrame", Main)
+    Content.Size = UDim2.new(1,-20,1,-120)
+    Content.Position = UDim2.new(0,10,0,100)
+    Content.BackgroundTransparency = 1
+    Content.ScrollBarThickness = 6
+    Content.Visible = false
+    Content.ScrollBarImageColor3 = Color3.fromRGB(255,50,50)
+
+    local layout = Instance.new("UIListLayout", Content)
+    layout.Padding = UDim.new(0,10)
+
+    Btn.MouseButton1Click:Connect(function()
+        for _,tab in pairs(Tabs) do
+            tab.Content.Visible = false
+        end
+        Content.Visible = true
+        CurrentTab = Content
+    end)
+
+    Tabs[name] = {Button = Btn, Content = Content}
 end
 
--- СОЗДАЁМ ВКЛАДКИ
-local VisualTab = CreateTab("Visuals")
-local CombatTab = CreateTab("Combat")
-local BindsTab = CreateTab("Binds")
+CreateTab("Visuals")
+CreateTab("Combat")
+CreateTab("Binds")
+Tabs["Visuals"].Content.Visible = true
+CurrentTab = Tabs["Visuals"].Content
 
--- ПЕРВАЯ ВКЛАДКА ПО УМОЛЧАНИЮ
-VisualTab.Visible = true
+-- =============================
+-- ЭЛЕМЕНТЫ (ТОГГЛЫ)
+-- =============================
+local function AddToggle(tab, name, default, callback)
+    local Frame = Instance.new("Frame", tab)
+    Frame.Size = UDim2.new(1,0,0,50)
+    Frame.BackgroundColor3 = Color3.fromRGB(35,35,55)
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,12)
 
--- ФУНКЦИЯ ТОГГЛА
-local function CreateToggle(parent, name, default, callback)
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, 0, 0, 50)
-    Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-    Frame.Parent = parent
-    local C = Instance.new("UICorner"); C.CornerRadius = UDim.new(0, 12); C.Parent = Frame
-
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    local Label = Instance.new("TextLabel", Frame)
+    Label.Size = UDim2.new(0.7,0,1,0)
     Label.BackgroundTransparency = 1
+    Label.Position = UDim2.new(0,15,0,0)
     Label.Text = name
     Label.TextColor3 = Color3.new(1,1,1)
-    Label.TextXAlignment = "Left"
     Label.Font = Enum.Font.Gotham
     Label.TextSize = 16
-    Label.Position = UDim2.new(0, 15, 0, 0)
-    Label.Parent = Frame
+    Label.TextXAlignment = Enum.TextXAlignment.Left
 
-    local Toggle = Instance.new("TextButton")
-    Toggle.Size = UDim2.new(0, 80, 0, 35)
-    Toggle.Position = UDim2.new(1, -95, 0.5, -17.5)
-    Toggle.BackgroundColor3 = default and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 255, 50, 50)
-    Toggle.Text = default and "ON" or "OFF"
-    Toggle.TextColor3 = Color3.new(1,1,1)
-    Toggle.Font = Enum.Font.GothamBold
-    Toggle.Parent = Frame
-    local TC = Instance.new("UICorner"); TC.CornerRadius = UDim.new(0, 10); TC.Parent = Toggle
+    local Btn = Instance.new("TextButton", Frame)
+    Btn.Size = UDim2.fromOffset(80,35)
+    Btn.Position = UDim2.new(1,-95,0.5,-18)
+    Btn.BackgroundColor3 = default and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
+    Btn.Text = default and "ON" or "OFF"
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,10)
 
-    Toggle.MouseButton1Click:Connect(function()
+    Btn.MouseButton1Click:Connect(function()
         default = not default
-        TweenService:Create(Toggle, TweenInfo.new(0.2), {BackgroundColor3 = default and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)}):Play()
-        Toggle.Text = default and "ON" or "OFF"
+        TS:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = default and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)}):Play()
+        Btn.Text = default and "ON" or "OFF"
         callback(default)
     end)
 end
 
--- ВКЛАДКА VISUALS
-CreateToggle(VisualTab, "ESP Enabled", true, function(v) Settings.ESP.Enabled = v end)
-CreateToggle(VisualTab, "Team Check", false, function(v) Settings.ESP.TeamCheck = v end)
-CreateToggle(VisualTab, "Box ESP", true, function(v) Settings.ESP.Box = v end)
-CreateToggle(VisualTab, "Name ESP", true, function(v) Settings.ESP.Name = v end)
-CreateToggle(VisualTab, "Distance ESP", true, function(v) Settings.ESP.Distance = v end)
-CreateToggle(VisualTab, "Health Bar", true, function(v) Settings.ESP.HealthBar = v end)
-CreateToggle(VisualTab, "Tracers от центра", true, function(v) Settings.ESP.Tracers = v end)
+-- VISUALS
+AddToggle(Tabs.Visuals.Content, "ESP Enabled", true, function(v) Settings.ESP.Enabled = v end)
+AddToggle(Tabs.Visuals.Content, "Team Check", false, function(v) Settings.ESP.TeamCheck = v end)
+AddToggle(Tabs.Visuals.Content, "Box ESP", true, function(v) Settings.ESP.Box = v end)
+AddToggle(Tabs.Visuals.Content, "Names", true, function(v) Settings.ESP.Name = v end)
+AddToggle(Tabs.Visuals.Content, "Distance", true, function(v) Settings.ESP.Distance = v end)
+AddToggle(Tabs.Visuals.Content, "Health Bar", true, function(v) Settings.ESP.HealthBar = v end)
+AddToggle(Tabs.Visuals.Content, "Tracers", true, function(v) Settings.ESP.Tracers = v end)
 
--- ВКЛАДКА COMBAT
-CreateToggle(CombatTab, "Aimbot 360°", false, function(v) Settings.Aimbot.Enabled = v end)
-CreateToggle(CombatTab, "Trigger Bot", true, function(v) Settings.Aimbot.TriggerBot = v end)
-CreateToggle(CombatTab, "Head Only", true, function(v) Settings.Aimbot.HeadOnly = v end)
+-- COMBAT
+AddToggle(Tabs.Combat.Content, "Aimbot", false, function(v) Settings.Aimbot.Enabled = v end)
+AddToggle(Tabs.Combat.Content, "TriggerBot", true, function(v) Settings.Aimbot.TriggerBot = v end)
+AddToggle(Tabs.Combat.Content, "Head Only", true, function(v) Settings.Aimbot.HeadOnly = v end)
 
--- ВКЛАДКА BINDS
-local BindLabel = Instance.new("TextLabel")
-BindLabel.Size = UDim2.new(1, 0, 0, 40)
-BindLabel.BackgroundTransparency = 1
-BindLabel.Text = "Menu Key: K | Aimbot Key: H"
-BindLabel.TextColor3 = Color3.new(1,1,1)
-BindLabel.Font = Enum.Font.Gotham
-BindLabel.TextSize = 16
-BindLabel.Parent = BindsTab
+-- =============================
+-- БИНДЫ
+-- =============================
+local BindInfo = Instance.new("TextLabel", Tabs.Binds.Content)
+BindInfo.Size = UDim2.new(1,0,0,40)
+BindInfo.BackgroundTransparency = 1
+BindInfo.Font = Enum.Font.Gotham
+BindInfo.TextSize = 16
+BindInfo.TextColor3 = Color3.new(1,1,1)
+BindInfo.Text = "Menu: "..Settings.Binds.Menu.Name.." | Aimbot: "..Settings.Binds.Aimbot.Name
 
-local ChangeBind = nil
-local function MakeBindButton(text, key, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -20, 0, 50)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,60)
-    btn.Text = text .. ": " .. key.Name
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.Gotham
-    btn.Parent = BindsTab
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 12); c.Parent = btn
+local function MakeBind(text, settingKey)
+    local Btn = Instance.new("TextButton", Tabs.Binds.Content)
+    Btn.Size = UDim2.new(1,-40,0,50)
+    Btn.BackgroundColor3 = Color3.fromRGB(40,40,60)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 16
+    Btn.TextColor3 = Color3.new(1,1,1)
+    Btn.Text = text..": "..Settings.Binds[settingKey].Name
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,12)
 
-    btn.MouseButton1Click:Connect(function()
-        btn.Text = text .. ": Press key..."
-        ChangeBind = callback
+    Btn.MouseButton1Click:Connect(function()
+        Btn.Text = text..": [...]"
+        ChangingBind = settingKey
     end)
-    return btn
 end
 
-MakeBindButton("Menu Key", Settings.Binds.Menu, function(key) Settings.Binds.Menu = key end)
-MakeBindButton("Aimbot Key", Settings.Binds.Aimbot, function(key) Settings.Binds.Aimbot = key end)
+MakeBind("Menu Key","Menu")
+MakeBind("Aimbot Key","Aimbot")
 
-UserInputService.InputBegan:Connect(function(input)
-    if ChangeBind then
-        Settings.Binds[ChangeBind == Settings.Binds.Menu and "Menu" or "Aimbot"] = input.KeyCode
-        BindLabel.Text = "Menu Key: " .. Settings.Binds.Menu.Name .. " | Aimbot Key: " .. Settings.Binds.Aimbot.Name
-        ChangeBind = nil
+UIS.InputBegan:Connect(function(input)
+    if ChangingBind and input.KeyCode ~= Enum.KeyCode.Unknown then
+        Settings.Binds[ChangingBind] = input.KeyCode
+        BindInfo.Text = "Menu: "..Settings.Binds.Menu.Name.." | Aimbot: "..Settings.Binds.Aimbot.Name
+        ChangingBind = nil
     end
 end)
 
--- ТЕНЬ + K
-MainFrame:GetPropertyChangedSignal("Position"):Connect(function()
-    Shadow.Position = MainFrame.Position + UDim2.new(0, 10, 0, 10)
-end)
-
-UserInputService.InputBegan:Connect(function(input)
+-- =============================
+-- ОТКРЫТИЕ МЕНЮ (K)
+-- =============================
+UIS.InputBegan:Connect(function(input)
     if input.KeyCode == Settings.Binds.Menu then
         MenuOpen = not MenuOpen
+        
         if MenuOpen then
             Shadow.Visible = true
-            TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Size = UDim2.new(0, 500, 0, 400)}):Play()
+            TS:Create(Blur, TweenInfo.new(0.4), {Size = 12}):Play()
+            TS:Create(Main, TweenInfo.new(0.35, Enum.EasingStyle.Back), {Size = UDim2.fromOffset(500,400)}):Play()
         else
-            TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+            TS:Create(Blur, TweenInfo.new(0.3), {Size = 0}):Play()
+            TS:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.fromOffset(0,0)}):Play()
             task.wait(0.3)
             Shadow.Visible = false
         end
-    elseif input.KeyCode == Settings.Binds.Aimbot then
+    end
+
+    if input.KeyCode == Settings.Binds.Aimbot then
         Settings.Aimbot.Enabled = not Settings.Aimbot.Enabled
-        game.StarterGui:SetCore("SendNotification", {Title = "Aimbot", Text = Settings.Aimbot.Enabled and "ON" or "OFF", Duration = 2})
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Aimbot",
+            Text = Settings.Aimbot.Enabled and "ON" or "OFF",
+            Duration = 2
+        })
     end
 end)
 
--- ESP И АИМБОТ — ВСТАВЬ СЮДА КОД ИЗ ПРЕДЫДУЩЕГО СООБЩЕНИЯ (v21.0)
--- (он не менялся, просто скопируй из предыдущего ответа)
-
-print("🪿 GOOSEHUB v22.0 ФУЛЛ С ВКЛАДКАМИ И БИНДАМИ ЗАГРУЖЕН!")
-print("K = меню | H = аимбот | Вкладка Binds — меняй клавиши!")
-
--- КИДАЙ — МЕНЮ КРАСИВОЕ, ВКЛАДКИ РАБОТАЮТ, БИНДЫ МЕНЯЮТСЯ, ВСЁ ЛЕТИТ!
--- ХОНК ХОНК ХОНК, ТЫ — БОГ, MINIENDEND! 🪿🩸🔥
+print("🪿 GooseHub v23.5 Loaded — мёд, а не меню")
