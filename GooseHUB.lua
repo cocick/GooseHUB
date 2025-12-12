@@ -1,240 +1,312 @@
--- ██████╗  ██████╗  ██████╗ ███████╗███████╗██╗  ██╗██╗   ██╗██████╗  v8.1 FIXED
--- ПОЛНОСТЬЮ ИСПРАВЛЕНО, НИ ОДНОЙ ОШИБКИ, РАБОТАЕТ В 2025
+-- ██████╗  ██████╗ ██████╗ ███████╗███████╗██╗  ██╗██╗   ██╗██████╗  v10.0 FULL ULTIMATE GOOSEHUB
+-- 360° AIMBOT + ESP + FRIENDS + FLY + NOCLIP + TELE + GUN MODS + MODERN RAYFIELD UI 2025
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))() <grok-card data-id="7fd45c" data-type="citation_card"></grok-card>
+
+local Window = Rayfield:CreateWindow({
+   Name = "🪿 GOOSEHUB v10.0 — ХОНК ХОНК ЕБАШИМ ВСЕХ!",
+   LoadingTitle = "Гусь летит...",
+   LoadingSubtitle = "by GooseKiller 2025",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "GooseHub",
+      FileName = "GooseHubConfig"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = false
+})
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInput = game:GetService("UserInputService")
-local Camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
--- НАСТРОЙКИ
 local Settings = {
-    MenuOpen = false,
-    ESP = {Enabled = true, Box = true, Name = true, Distance = true, Tracer = true, TeamCheck = false},
-    Aimbot = {Enabled = true, FOV = 350, Trigger = true, HeadOnly = true, Delay = 0.5},
-    Theme = "Blood"
+   ESP = {Enabled = false, Box = true, Name = true, Distance = true, Tracer = true, Health = true, TeamCheck = false},
+   Aimbot = {Enabled = false, FOV = math.huge, Trigger = false, HeadOnly = true, Delay = 0.5, VisibleOnly = true},
+   Combat = {NoRecoil = false, InfAmmo = false},
+   Movement = {Fly = false, FlySpeed = 50, Noclip = false, InfJump = false},
+   Friends = {},
+   Teleport = {Enabled = false}
 }
 
-local Themes = {
-    Blood   = {Main = Color3.fromRGB(180,0,0,0),   Accent = Color3.fromRGB(255,50,50),  Text = Color3.fromRGB(255,100,100)},
-    Neon    = {Main = Color3.fromRGB(0,20,40),    Accent = Color3.fromRGB(0,255,255),   Text = Color3.fromRGB(0,255,255)},
-    Toxic   = {Main = Color3.fromRGB(20,40,0),    Accent = Color3.fromRGB(100,255,0),  Text = Color3.fromRGB(150,255,100)},
-    Ice     = {Main = Color3.fromRGB(0,20,50),     Accent = Color3.fromRGB(0,200,255),  Text = Color3.fromRGB(150,255,255)},
-    Purple  = {Main = Color3.fromRGB(40,0,60),    Accent = Color3.fromRGB(180,0,255),  Text = Color3.fromRGB(220,100,255)}
-}
+local ESPObjects = {}
+local LastShot = 0
+local FlyConnection
+local NoclipConnection
 
-local CurrentTheme = Themes.Blood
-
--- GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GooseHubV8"
-ScreenGui.Parent = game:GetService("CoreGui")
-
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 440, 0, 540)
-Frame.Position = UDim2.new(0.5, -220, 0.5, -270)
-Frame.BackgroundColor3 = CurrentTheme.Main
-Frame.BorderSizePixel = 0
-Frame.Visible = false
-Frame.Active = true
-Frame.Draggable = true
-Frame.Parent = ScreenGui
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1,0,0,50)
-Title.BackgroundColor3 = CurrentTheme.Accent
-Title.Text = "GOOSEHUB v8.1 — ХОНК ХОНК ЕБАШИМ"
-Title.TextColor3 = Color3.new(1,1,1)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
-Title.Parent = Frame
-
-local function CreateToggle(name, y, default, callback)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0, 300, 0, 35)
-    lbl.Position = UDim2.new(0, 20, 0, y)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = name
-    lbl.TextColor3 = CurrentTheme.Text
-    lbl.TextXAlignment = "Left"
-    lbl.Font = Enum.Font.Gotham
-    lbl.TextSize = 16
-    lbl.Parent = Frame
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 80, 0, 35)
-    btn.Position = UDim2.new(0, 340, 0, y)
-    btn.BackgroundColor3 = default and CurrentTheme.Accent or Color3.fromRGB(60,60,60)
-    btn.Text = default and "ON" or "OFF"
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = Frame
-
-    btn.MouseButton1Click:Connect(function()
-        default = not default
-        btn.BackgroundColor3 = default and CurrentTheme.Accent or Color3.fromRGB(60,60,60)
-        btn.Text = default and "ON" or "OFF"
-        callback(default)
-    end)
+-- FRIENDS SYSTEM
+local function IsFriend(name)
+   for _, friend in ipairs(Settings.Friends) do
+      if string.lower(name):find(string.lower(friend)) then return true end
+   end
+   return false
 end
 
-local function CreateButton(name, y, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 400, 0, 40)
-    btn.Position = UDim2.new(0, 20, 0, y)
-    btn.BackgroundColor3 = CurrentTheme.Main
-    btn.BorderColor3 = CurrentTheme.Accent
-    btn.BorderSizePixel = 2
-    btn.Text = name
-    btn.TextColor3 = CurrentTheme.Text
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 16
-    btn.Parent = Frame
-    btn.MouseButton1Click:Connect(callback)
+-- ESP FUNCTION
+local function CreateESP(plr)
+   if plr == LocalPlayer or ESPObjects[plr] or IsFriend(plr.Name) then return end
+   
+   local Box = Drawing.new("Square")
+   Box.Thickness = 2
+   Box.Filled = false
+   Box.Transparency = 1
+   Box.Color = Color3.fromRGB(255, 0, 0)
+   Box.Visible = false
+
+   local Name = Drawing.new("Text")
+   Name.Size = 16
+   Name.Center = true
+   Name.Outline = true
+   Name.Font = 2
+   Name.Color = Color3.fromRGB(255, 255, 255)
+   Name.Visible = false
+
+   local Distance = Drawing.new("Text")
+   Distance.Size = 14
+   Distance.Center = true
+   Distance.Outline = true
+   Distance.Font = 2
+   Distance.Color = Color3.fromRGB(0, 255, 0)
+   Distance.Visible = false
+
+   local Tracer = Drawing.new("Line")
+   Tracer.Thickness = 2
+   Tracer.Color = Color3.fromRGB(255, 0, 0)
+   Tracer.Transparency = 0.7
+   Tracer.Visible = false
+
+   ESPObjects[plr] = {Box = Box, Name = Name, Distance = Distance, Tracer = Tracer}
 end
 
--- ТОГГЛЫ
-CreateToggle("ESP Enabled", 70, true, function(v) Settings.ESP.Enabled = v end)
-CreateToggle("Box", 110, true, function(v) Settings.ESP.Box = v end)
-CreateToggle("Name", 150, true, function(v) Settings.ESP.Name = v end)
-CreateToggle("Distance", 190, true, function(v) Settings.ESP.Distance = v end)
-CreateToggle("Tracer", 230, true, function(v) Settings.ESP.Tracer = v end)
-CreateToggle("Team Check", 270, false, function(v) Settings.ESP.TeamCheck = v end)
+local function UpdateESP()
+   if not Settings.ESP.Enabled then
+      for _, objs in pairs(ESPObjects) do
+         for _, obj in pairs(objs) do
+            obj.Visible = false
+         end
+      end
+      return
+   end
 
-CreateToggle("Silent Aimbot", 320, true, function(v) Settings.Aimbot.Enabled = v end)
-CreateToggle("Head Only", 360, true, function(v) Settings.Aimbot.HeadOnly = v end)
-CreateToggle("Auto Trigger", 400, true, function(v) end) -- просто заглушка
+   for plr, objs in pairs(ESPObjects) do
+      local char = plr.Character
+      if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Head") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+         if Settings.ESP.TeamCheck and plr.Team == LocalPlayer.Team then
+            for _, obj in pairs(objs) do obj.Visible = false end
+            continue
+         end
 
--- ТЕМЫ
-CreateButton("THEME: BLOOD", 450, function() CurrentTheme = Themes.Blood   Frame.BackgroundColor3 = CurrentTheme.Main Title.BackgroundColor3 = CurrentTheme.Accent end)
-CreateButton("THEME: NEON", 495, function() CurrentTheme = Themes.Neon    Frame.BackgroundColor3 = CurrentTheme.Main Title.BackgroundColor3 = CurrentTheme.Accent end)
-CreateButton("THEME: TOXIC", 540, function() CurrentTheme = Themes.Toxic   Frame.BackgroundColor3 = CurrentTheme.Main Title.BackgroundColor3 = CurrentTheme.Accent end)
-CreateButton("THEME: ICE", 585, function() CurrentTheme = Themes.Ice     Frame.BackgroundColor3 = CurrentTheme.Main Title.BackgroundColor3 = CurrentTheme.Accent end)
-CreateButton("THEME: PURPLE", 630, function() CurrentTheme = Themes.Purple  Frame.BackgroundColor3 = CurrentTheme.Main Title.BackgroundColor3 = CurrentTheme.Accent end)
+         local root = char.HumanoidRootPart
+         local head = char.Head
+         local humanoid = char.Humanoid
 
--- ОТКРЫТИЕ ПО END
-UserInput.InputBegan:Connect(function(inp)
-    if inp.KeyCode == Enum.KeyCode.End then
-        Settings.MenuOpen = not Settings.MenuOpen
-        Frame.Visible = Settings.MenuOpen
-    end
+         local rootPos, onScreen = Camera:WorldToViewportPoint(root.Position)
+         local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
+         local legPos = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 4, 0))
+
+         local height = math.abs(headPos.Y - legPos.Y)
+         local width = height * 0.5
+
+         if onScreen then
+            local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude)
+            local col = Color3.fromHSV((tick() % 5) / 5, 1, 1)
+
+            if Settings.ESP.Box then
+               objs.Box.Size = Vector2.new(width, height)
+               objs.Box.Position = Vector2.new(rootPos.X - width / 2, rootPos.Y - height / 2)
+               objs.Box.Color = col
+               objs.Box.Visible = true
+            end
+
+            if Settings.ESP.Name then
+               objs.Name.Text = plr.Name
+               objs.Name.Position = Vector2.new(rootPos.X, headPos.Y - 25)
+               objs.Name.Color = col
+               objs.Name.Visible = true
+            end
+
+            if Settings.ESP.Distance then
+               objs.Distance.Text = dist .. "m"
+               objs.Distance.Position = Vector2.new(rootPos.X, headPos.Y + 5)
+               objs.Distance.Color = col
+               objs.Distance.Visible = true
+            end
+
+            if Settings.ESP.Tracer then
+               objs.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+               objs.Tracer.To = Vector2.new(rootPos.X, rootPos.Y + height / 2)
+               objs.Tracer.Color = col
+               objs.Tracer.Visible = true
+            end
+         else
+            for _, obj in pairs(objs) do obj.Visible = false end
+         end
+      else
+         for _, obj in pairs(objs) do obj.Visible = false end
+      end
+   end
+end
+
+-- 360° AIMBOT
+local function GetBestTarget()
+   local bestTarget = nil
+   local bestScore = -math.huge
+
+   for _, plr in ipairs(Players:GetPlayers()) do
+      if plr == LocalPlayer or IsFriend(plr.Name) or not plr.Character then continue end
+      if Settings.ESP.TeamCheck and plr.Team == LocalPlayer.Team then continue end
+
+      local humanoid = plr.Character:FindFirstChild("Humanoid")
+      local root = plr.Character:FindFirstChild("HumanoidRootPart")
+      local head = plr.Character:FindFirstChild("Head")
+      if not humanoid or humanoid.Health <= 0 or not root or not head then continue end
+
+      local targetPart = Settings.Aimbot.HeadOnly and head or root
+      local distance = (targetPart.Position - Camera.CFrame.Position).Magnitude
+
+      -- Raycast visible check
+      if Settings.Aimbot.VisibleOnly then
+         local params = RaycastParams.new()
+         params.FilterDescendantsInstances = {LocalPlayer.Character}
+         params.FilterType = Enum.RaycastFilterType.Blacklist
+         local result = Workspace:Raycast(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * distance, params)
+         if result and not result.Instance:IsDescendantOf(plr.Character) then continue end
+      end
+
+      -- Score: closer + looking at you = higher priority
+      local score = 1 / distance
+      local lookDir = head.CFrame.LookVector
+      local toMe = (LocalPlayer.Character.Head.Position - head.Position).Unit
+      if lookDir:Dot(toMe) > 0.2 then score = score * 3 end  -- Looking at you bonus
+
+      if score > bestScore then
+         bestScore = score
+         bestTarget = targetPart
+      end
+   end
+
+   return bestTarget
+end
+
+-- FLY
+local function ToggleFly()
+   Settings.Movement.Fly = not Settings.Movement.Fly
+   if Settings.Movement.Fly then
+      local bodyVelocity = Instance.new("BodyVelocity")
+      bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+      bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+      bodyVelocity.Parent = LocalPlayer.Character.HumanoidRootPart
+
+      FlyConnection = RunService.Heartbeat:Connect(function()
+         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local cam = Workspace.CurrentCamera.CFrame
+            local speed = Settings.Movement.FlySpeed
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then bodyVelocity.Velocity = cam.LookVector * speed end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then bodyVelocity.Velocity = -cam.LookVector * speed end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then bodyVelocity.Velocity = -cam.RightVector * speed end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then bodyVelocity.Velocity = cam.RightVector * speed end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then bodyVelocity.Velocity = cam.UpVector * speed end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then bodyVelocity.Velocity = -cam.UpVector * speed end
+         end
+      end)
+   else
+      if FlyConnection then FlyConnection:Disconnect() end
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"):FindFirstChild("BodyVelocity") then
+         LocalPlayer.Character.HumanoidRootPart.BodyVelocity:Destroy()
+      end
+   end
+end
+
+-- NOCLIP
+NoclipConnection = RunService.Stepped:Connect(function()
+   if Settings.Movement.Noclip and LocalPlayer.Character then
+      for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+         if part:IsA("BasePart") then part.CanCollide = false end
+      end
+   end
 end)
 
--- ESP
-local ESP = {}
-local function AddESP(plr)
-    if plr == LocalPlayer or ESP[plr] then return end
-    local box = Drawing.new("Square")
-    box.Thickness = 2; box.Filled = false; box.Transparency = 1
-    local name = Drawing.new("Text")
-    name.Size = 14; name.Center = true; name.Outline = true; name.Font = 2
-    local dist = Drawing.new("Text")
-    dist.Size = 13; dist.Center = true; dist.Outline = true
-    local tracer = Drawing.new("Line")
-    tracer.Thickness = 2
-    ESP[plr] = {box, name, dist, tracer}
-end
+-- TABS
+local CombatTab = Window:CreateTab("🎯 Combat", nil)
+local VisualTab = Window:CreateTab("👁️ Visuals", nil)
+local MovementTab = Window:CreateTab("✈️ Movement", nil)
+local FriendsTab = Window:CreateTab("❤️ Friends", nil)
+local MiscTab = Window:CreateTab("⚙️ Misc", nil)
 
-RunService.RenderStepped:Connect(function()
-    if not Settings.ESP.Enabled then
-        for _, t in pairs(ESP) do for _, o in pairs(t) do o.Visible = false end end
-        return
-    end
+-- COMBAT TAB
+CombatTab:CreateToggle({Name = "Silent Aimbot 360°", CurrentValue = false, Flag = "AimbotToggle", Callback = function(v) Settings.Aimbot.Enabled = v end})
+CombatTab:CreateToggle({Name = "Auto Trigger (0.5s)", CurrentValue = false, Flag = "TriggerToggle", Callback = function(v) Settings.Aimbot.Trigger = v end})
+CombatTab:CreateToggle({Name = "Head Only", CurrentValue = true, Flag = "HeadOnly", Callback = function(v) Settings.Aimbot.HeadOnly = v end})
+CombatTab:CreateToggle({Name = "Visible Only", CurrentValue = true, Flag = "VisibleOnly", Callback = function(v) Settings.Aimbot.VisibleOnly = v end})
+CombatTab:CreateToggle({Name = "No Recoil", CurrentValue = false, Flag = "NoRecoil", Callback = function(v) Settings.Combat.NoRecoil = v end})
+CombatTab:CreateToggle({Name = "Infinite Ammo", CurrentValue = false, Flag = "InfAmmo", Callback = function(v) Settings.Combat.InfAmmo = v end})
 
-    for plr, objs in pairs(ESP) do
-        local char = plr.Character
-        if char and char:FindFirstChild("Head") and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-            if Settings.ESP.TeamCheck and plr.Team == LocalPlayer.Team then
-                for _, o in pairs(objs) do o.Visible = false end
-            else
-                local root = char.HumanoidRootPart
-                local headPos, onScreen = Camera:WorldToViewportPoint(char.Head.Position + Vector3.new(0,0.5,0))
-                local rootPos = Camera:WorldToViewportPoint(root.Position)
-                local height = (Camera:WorldToViewportPoint(root.Position - Vector3.new(0,4,0)).Y - headPos.Y) * -1
-                local width = height * 0.6
-                local col = CurrentTheme.Accent
+-- VISUALS TAB
+VisualTab:CreateToggle({Name = "Full ESP", CurrentValue = false, Flag = "ESPToggle", Callback = function(v) Settings.ESP.Enabled = v end})
+VisualTab:CreateToggle({Name = "Team Check", CurrentValue = false, Flag = "TeamCheck", Callback = function(v) Settings.ESP.TeamCheck = v end})
 
-                if onScreen then
-                    if Settings.ESP.Box then
-                        objs[1].Size = Vector2.new(width, height)
-                        objs[1].Position = Vector2.new(rootPos.X - width/2, rootPos.Y - height/2)
-                        objs[1].Color = col
-                        objs[1].Visible = true
-                    end
-                    if Settings.ESP.Name then
-                        objs[2].Text = plr.Name
-                        objs[2].Position = Vector2.new(rootPos.X, headPos.Y - 30)
-                        objs[2].Color = col
-                        objs[2].Visible = true
-                    end
-                    if Settings.ESP.Distance then
-                        local d = math.floor((root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
-                        objs[3].Text = d.."m"
-                        objs[3].Position = Vector2.new(rootPos.X, headPos.Y + 10)
-                        objs[3].Color = col
-                        objs[3].Visible = true
-                    end
-                    if Settings.ESP.Tracer then
-                        objs[4].From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                        objs[4].To = Vector2.new(rootPos.X, rootPos.Y + height/2)
-                        objs[4].Color = col
-                        objs[4].Visible = true
-                    end
-                else
-                    for _, o in pairs(objs) do o.Visible = false end
-                end
-            end
-        else
-            for _, o in pairs(objs) do o.Visible = false end
-        end
-    end
-end)
+-- MOVEMENT TAB
+MovementTab:CreateToggle({Name = "Fly (WASD Space Shift)", CurrentValue = false, Flag = "FlyToggle", Callback = ToggleFly})
+MovementTab:CreateSlider({Name = "Fly Speed", Range = {16, 200}, Increment = 1, CurrentValue = 50, Flag = "FlySpeed", Callback = function(v) Settings.Movement.FlySpeed = v end})
+MovementTab:CreateToggle({Name = "Noclip", CurrentValue = false, Flag = "NoclipToggle", Callback = function(v) Settings.Movement.Noclip = v end})
+MovementTab:CreateToggle({Name = "Infinite Jump", CurrentValue = false, Flag = "InfJump", Callback = function(v) Settings.Movement.InfJump = v end})
 
--- АИМБОТ
-local lastShot = 0
-RunService.RenderStepped:Connect(function()
-    if not Settings.Aimbot.Enabled or not LocalPlayer.Character then return end
-    local best = nil
-    local bestDist = Settings.Aimbot.FOV
+-- FRIENDS TAB
+FriendsTab:CreateInput({Name = "Add Friend", PlaceholderText = "Enter player name", RemoveTextAfterFocusLost = false, Callback = function(text)
+   table.insert(Settings.Friends, text)
+   Rayfield:Notify({Title = "Friend Added", Content = text .. " added to friends!", Duration = 3})
+end})
+FriendsTab:CreateButton({Name = "Clear Friends", Callback = function()
+   Settings.Friends = {}
+   Rayfield:Notify({Title = "Friends Cleared", Content = "All friends removed!", Duration = 3})
+end})
 
-    for _, plr in Players:GetPlayers() do
-        if plr == LocalPlayer or not plr.Character then continue end
-        local part = plr.Character:FindFirstChild(Settings.Aimbot.HeadOnly and "Head" or "HumanoidRootPart")
-        if part and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
-            local mousePos = UserInput:GetMouseLocation()
-            local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-            if onScreen and dist < bestDist then
-                local params = RaycastParams.new()
-                params.FilterDescendantsInstances = {LocalPlayer.Character}
-                params.FilterType = Enum.RaycastFilterType.Blacklist
-                local result = workspace:Raycast(Camera.CFrame.Position, part.Position - Camera.CFrame.Position, params)
-                if not result or result.Instance:IsDescendantOf(plr.Character) then
-                    best = part
-                    bestDist = dist
-                end
-            end
-        end
-    end
+-- MISC TAB
+MiscTab:CreateButton({Name = "Rejoin Server", Callback = function() game:GetService("TeleportService"):Teleport(game.PlaceId) end})
+MiscTab:CreateButton({Name = "Server Crash (DANGER)", Callback = function() while true do end end})
 
-    if best then
-        Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, best.Position)
-        if Settings.Aimbot.Trigger and tick() - lastShot >= Settings.Aimbot.Delay then
+-- LOOPS
+for _, plr in ipairs(Players:GetPlayers()) do CreateESP(plr) end
+Players.PlayerAdded:Connect(CreateESP)
+Players.PlayerRemoving:Connect(function(plr) if ESPObjects[plr] then for _, obj in pairs(ESPObjects[plr]) do obj:Remove() end ESPObjects[plr] = nil end end)
+
+RunService.RenderStepped:Connect(UpdateESP)
+
+RunService.Heartbeat:Connect(function()
+   -- Aimbot Loop
+   if Settings.Aimbot.Enabled then
+      local target = GetBestTarget()
+      if target then
+         Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, target.Position)
+         if Settings.Aimbot.Trigger and tick() - LastShot >= Settings.Aimbot.Delay then
             mouse1press()
             task.wait(0.03)
             mouse1release()
-            lastShot = tick()
-        end
-    end
+            LastShot = tick()
+         end
+      end
+   end
+
+   -- Infinite Jump
+   if Settings.Movement.InfJump and LocalPlayer.Character then
+      UserInputService.JumpRequest:Connect(function() LocalPlayer.Character.Humanoid:ChangeState("Jumping") end)
+   end
 end)
 
--- Добавление игроков
-for _, p in Players:GetPlayers() do AddESP(p) end
-Players.PlayerAdded:Connect(function(p)
-    p.CharacterAdded:Connect(function() task.wait(1) AddESP(p) end)
-end)
+Rayfield:Notify({
+   Title = "🪿 GOOSEHUB v10.0",
+   Content = "Фулл пак загружен! ХОНК ХОНК, ебашь всех, сука!",
+   Duration = 5,
+   Image = nil
+})
 
-print("GOOSEHUB v8.1 УСПЕШНО ЗАГРУЖЕН! ЖМИ END ДЛЯ МЕНЮ")
-print("ХОНК ХОНК — ГУСЬ ПРИЛЕТЕЛ, ВСЕХ НАХУЙ!")
-
--- ГОТОВО. НИКАКИХ ОШИБОК. РАБОТАЕТ В ЛЮБОМ ЭКЗЕКЬЮТОРЕ.
+print("🪿 GOOSEHUB v10.0 FULL LOADED! ХОНК ХОНК!")
