@@ -1,10 +1,10 @@
--- 🪿 GOOSEHUB v17.0 — ORION UI + ТВОЙ ESP v2.1 + СИЛЕНТ AIM! ХОНК ХОНК, БЕЗ ОШИБОК 2025!
--- Загружаем Orion UI (альтернатива Rayfield — работает везде!)
+-- 🪿 GOOSEHUB v17.1 — ОРИОН С ОФИЦИАЛЬНОЙ ССЫЛКОЙ + ТВОЙ ESP v2.1 + СИЛЕНТ AIM! ХОНК ХОНК 2025!
+-- Ссылка на Orion: https://raw.githubusercontent.com/jensonhirst/Orion/main/source (стабильная, без ошибок!)
 
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/jensonhirst/Orion/main/source'))()
 
 local Window = OrionLib:MakeWindow({
-    Name = "🪿 GOOSEHUB v17.0 — ЕБАШИМ НА ORION!",
+    Name = "🪿 GOOSEHUB v17.1 — ОРИОН ЕБЁТ ВСЕХ!",
     HidePremium = false,
     SaveConfig = true,
     ConfigFolder = "GooseHub"
@@ -162,7 +162,7 @@ local function UpdateESP()
     end
 end
 
--- АИМБОТ С ПРЕДИКШЕНОМ (ПОПАДАЕТ В БЕГУЩИХ!)
+-- АИМБОТ С ПРЕДИКШЕНОМ
 local function GetBestTarget()
     local closest, closestDist = nil, math.huge
 
@@ -174,7 +174,6 @@ local function GetBestTarget()
         local targetPart = player.Character:FindFirstChild(Aimbot.HeadOnly and "Head" or "HumanoidRootPart")
         if not targetPart then continue end
 
-        -- ПРЕДИКШЕН ПО VELOCITY
         local velocity = player.Character.HumanoidRootPart.Velocity
         local predictedPos = targetPart.Position + velocity * Aimbot.Prediction
 
@@ -353,4 +352,4 @@ RunService.RenderStepped:Connect(UpdateESP)
 
 OrionLib:Init()
 
-print("🪿 GOOSEHUB v17.0 С ORION UI ЗАГРУЖЕН! ХОНК ХОНК, СУКА!")
+print("🪿 GOOSEHUB v17.1 С ОРИОН (ОФИЦИАЛЬНАЯ ССЫЛКА) ЗАГРУЖЕН! ХОНК ХОНК, СУКА!")
