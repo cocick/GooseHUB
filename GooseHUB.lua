@@ -1,7 +1,7 @@
 -- ██████╗  ██████╗ ██████╗ ███████╗███████╗██╗  ██╗██╗   ██╗██████╗  v10.0 FULL ULTIMATE GOOSEHUB
 -- 360° AIMBOT + ESP + FRIENDS + FLY + NOCLIP + TELE + GUN MODS + MODERN RAYFIELD UI 2025
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))() <grok-card data-id="7fd45c" data-type="citation_card"></grok-card>
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "🪿 GOOSEHUB v10.0 — ХОНК ХОНК ЕБАШИМ ВСЕХ!",
