@@ -67,7 +67,7 @@ end
 -- 🦆 РЕДЖОИН ФУНКЦИЯ
 local function rejoin()
     print("🦆 РЕДЖОИН, ПИЗДЕЦ! Перезаход на новый сервер...")
-    queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/YourUsername/AutofarmLoader/main/loader.lua'))()")  -- Автоэкзек на реджойне (замени на свой хост)
+    queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/cocick/GooseHUB/refs/heads/main/loader.lua'))()")  -- Автоэкзек на реджойне (замени на свой хост)
     TeleportService:Teleport(placeId, player)
 end
 
